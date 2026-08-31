@@ -63,7 +63,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </h3>
           {customer.familyMembers.length > 0 ? (
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {customer.familyMembers.map(f => (
+              {customer.familyMembers.map((f: any) => (
                 <li key={f.id} className="bg-gray-50 p-3 rounded-lg border flex flex-col">
                   <span className="font-medium text-gray-900">{f.name} <span className="text-sm text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full ml-1">{f.relation}</span></span>
                   {f.phone && <span className="text-sm text-gray-600 mt-1">📞 {f.phone}</span>}
@@ -83,7 +83,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             보유 계약
           </h3>
           <div className="space-y-3">
-            {customer.contracts.map(c => (
+            {customer.contracts.map((c: any) => (
               <div key={c.id} className="bg-gray-50 p-4 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -112,7 +112,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             터치 / 활동 이력
           </h3>
           <div className="space-y-4 mb-4 max-h-80 overflow-y-auto pr-2">
-            {customer.touchHistories.map(t => (
+            {customer.touchHistories.map((t: any) => (
               <div key={t.id} className="flex gap-4 items-start relative pl-4 border-l-2 border-gray-200">
                 <div className="absolute w-3 h-3 bg-gray-300 rounded-full -left-[7px] top-1.5 border-2 border-white"></div>
                 <div>
