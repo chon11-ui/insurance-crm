@@ -2,11 +2,9 @@
 
 import { cookies } from 'next/headers'
 import { getAuth } from 'firebase-admin/auth'
-import '@/lib/firebase-admin'
+import '@/lib/firebase-admin' // top-level import to ensure initialization
 
 export async function createSession(idToken: string) {
-  const { getAdminInitError } = require('../../lib/firebase-admin')
-  if (getAdminInitError()) return { success: false, error: 'Admin Init Failed: ' + getAdminInitError() }
   try {
     const expiresIn = 60 * 60 * 24 * 5 * 1000 // 5 days
     const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn })
@@ -19,9 +17,9 @@ export async function createSession(idToken: string) {
     })
     
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Session creation failed', error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    return { success: false, error: error.message || String(error) }
   }
 }
 
