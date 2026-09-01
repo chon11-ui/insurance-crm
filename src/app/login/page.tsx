@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (res.success) {
         router.push('/')
       } else {
-        setError('로그인 세션 생성 실패')
+        setError('서버 에러: ' + (res.error || '알 수 없음'))
       }
     } catch (err: any) {
       console.error(err)
@@ -49,7 +49,7 @@ export default function LoginPage() {
       if (res.success) {
         router.push('/')
       } else {
-        setError('로그인 세션 생성 실패')
+        setError('서버 에러: ' + (res.error || '알 수 없음'))
       }
     } catch (err: any) {
       console.error(err)
