@@ -5,7 +5,7 @@ import { getAuth } from 'firebase-admin/auth'
 import '@/lib/firebase-admin'
 
 export async function createSession(idToken: string) {
-  const { getAdminInitError } = await import('@/lib/firebase-admin')
+  const { getAdminInitError } = require('../../lib/firebase-admin')
   if (getAdminInitError()) return { success: false, error: 'Admin Init Failed: ' + getAdminInitError() }
   try {
     const expiresIn = 60 * 60 * 24 * 5 * 1000 // 5 days
