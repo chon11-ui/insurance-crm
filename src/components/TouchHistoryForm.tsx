@@ -1,45 +1,63 @@
 'use client'
 
-import { useState } from 'react'
-import { addTouchHistory } from '@/app/actions/customer'
+import { useState, useEffect } from 'react'
+import { auth, db } from '@/lib/firebase'
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 
-export function TouchHistoryForm({ customerId }: { customerId: string }) {
-  const [loading, setLoading] = useState(false)
+export default function TouchHistoryForm({ customerId }: { customerId: string }) {
+  const [history, setHistory] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      type: formData.get('type') as string,
-      description: formData.get('description') as string,
-      date: new Date(formData.get('date') as string)
-    }
-
+  const fetchHistory = async () => {
     try {
-      await addTouchHistory(customerId, data)
-      ;(e.target as HTMLFormElement).reset()
-    } catch (e) {
-      alert('오류가 발생했습니다.')
+      const q = query(collection(db, 'touchHistory'), where('customerId', '==', customerId))
+      const snapshot = await getDocs(q)
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      setHistory(data)
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => { fetchHistory() }, [customerId])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    try {
+      await addDoc(collection(db, 'touchHistory'), {
+        customerId,
+        type: formData.get('type'),
+        date: formData.get('date'),
+        content: formData.get('content'),
+        createdAt: new Date().toISOString()
+      })
+      fetchHistory()
+      e.currentTarget.reset()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="mt-4 flex flex-col md:flex-row gap-2">
-      <input name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500 md:w-40" />
-      <select name="type" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500 bg-white md:w-40">
-        <option value="선물 지급">선물 지급</option>
-        <option value="보장분석 발행">보장분석 발행</option>
-        <option value="상담 진행">상담 진행</option>
-        <option value="안부 인사">안부 인사</option>
-        <option value="기타">기타</option>
-      </select>
-      <input name="description" placeholder="상세 내용" className="flex-1 px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500" />
-      <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50">
-        이력 추가
-      </button>
-    </form>
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">터치(상담) 이력</h2>
+      <form onSubmit={handleSubmit} className="mb-6 bg-gray-50 p-4 rounded-lg flex gap-3 items-start">
+        <div className="w-1/4"><select name="type" className="w-full text-sm p-2 border rounded"><option>전화</option><option>방문</option><option>카톡</option><option>기타</option></select></div>
+        <div className="w-1/4"><input type="date" name="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full text-sm p-2 border rounded" required /></div>
+        <div className="w-2/4 flex gap-2"><input type="text" name="content" placeholder="상담 내용을 입력하세요..." className="w-full text-sm p-2 border rounded" required /><button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md whitespace-nowrap text-sm">기록</button></div>
+      </form>
+      <div className="space-y-4">
+        {loading ? <div className="text-center text-sm">로딩중...</div> : history.map(h => (
+          <div key={h.id} className="relative pl-6 pb-4 border-l-2 border-blue-200 last:border-0 last:pb-0">
+            <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1"></div>
+            <div className="flex gap-3 items-baseline mb-1"><span className="text-sm font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{h.type}</span><span className="text-xs text-gray-500">{h.date}</span></div>
+            <p className="text-sm text-gray-800">{h.content}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
