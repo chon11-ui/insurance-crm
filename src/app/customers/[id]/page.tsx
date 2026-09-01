@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 import { auth, db } from '@/lib/firebase'
-import { doc, getDoc, deleteDoc } from 'firebase/firestore'
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import ContractForm from '@/components/ContractForm'
 import FamilyForm from '@/components/FamilyForm'
@@ -18,6 +18,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showRRN, setShowRRN] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState<any>({})
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -44,6 +46,35 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     return () => unsubscribe()
   }, [id, router])
 
+  
+  const handleEditClick = () => {
+    setEditForm({ ...customer })
+    setIsEditing(true)
+  }
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const docRef = doc(db, 'customers', id)
+      await updateDoc(docRef, {
+        ...editForm,
+        updatedAt: new Date().toISOString()
+      })
+      setCustomer({ ...customer, ...editForm })
+      setIsEditing(false)
+    } catch (err) {
+      console.error(err)
+      alert('수정 실패')
+    }
+  }
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEditForm((prev: any) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
+
   const handleDelete = async () => {
     if (!confirm('정말 이 고객을 삭제하시겠습니까? (관련된 모든 데이터가 삭제됩니다)')) return
     
@@ -69,6 +100,10 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             목록으로 돌아가기
           </Link>
           <div className="flex gap-2">
+            <button onClick={handleEditClick} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md">
+              <Edit className="w-4 h-4" />
+              수정
+            </button>
             <button onClick={handleDelete} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md">
               <Trash2 className="w-4 h-4" />
               고객 삭제
@@ -78,29 +113,53 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">고객 상세 정보</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div><p className="text-sm text-gray-500">이름</p><p className="text-lg font-medium text-gray-900">{customer.name}</p></div>
-            <div><p className="text-sm text-gray-500">연락처</p><p className="text-lg font-medium text-gray-900">{customer.phone}</p></div>
-            <div>
-              <p className="text-sm text-gray-500">주민등록번호</p>
-              <div className="flex items-center gap-2">
-                <p className="text-lg font-medium text-gray-900">
-                  {customer.birthDate || '-'}-{customer.residentNumBack ? (showRRN ? customer.residentNumBack : '*******') : '-'}
-                </p>
-                {customer.residentNumBack && (
-                  <button 
-                    onClick={() => setShowRRN(!showRRN)}
-                    className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
-                  >
-                    {showRRN ? '숨기기' : '보기'}
-                  </button>
-                )}
+          {isEditing ? (
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label className="block text-sm font-medium text-gray-700">이름</label><input type="text" name="name" value={editForm.name} onChange={handleEditChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div><label className="block text-sm font-medium text-gray-700">연락처</label><input type="text" name="phone" value={editForm.phone} onChange={handleEditChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">주민등록번호 (앞 6자리 - 뒤 7자리)</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input type="text" name="birthDate" maxLength={6} value={editForm.birthDate} onChange={handleEditChange} className="block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                    <span>-</span>
+                    <input type="text" name="residentNumBack" maxLength={7} value={editForm.residentNumBack} onChange={handleEditChange} className="block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                  </div>
+                </div>
+                <div><label className="block text-sm font-medium text-gray-700">직업</label><input type="text" name="job" value={editForm.job} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700">주소</label><input type="text" name="address" value={editForm.address} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700">특이사항</label><textarea name="notes" rows={3} value={editForm.notes} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
               </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">취소</button>
+                <button type="submit" className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">저장</button>
+              </div>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div><p className="text-sm text-gray-500">이름</p><p className="text-lg font-medium text-gray-900">{customer.name}</p></div>
+              <div><p className="text-sm text-gray-500">연락처</p><p className="text-lg font-medium text-gray-900">{customer.phone}</p></div>
+              <div>
+                <p className="text-sm text-gray-500">주민등록번호</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-medium text-gray-900">
+                    {customer.birthDate || '-'}-{customer.residentNumBack ? (showRRN ? customer.residentNumBack : '*******') : '-'}
+                  </p>
+                  {customer.residentNumBack && (
+                    <button 
+                      onClick={() => setShowRRN(!showRRN)}
+                      className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
+                    >
+                      {showRRN ? '숨기기' : '보기'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div><p className="text-sm text-gray-500">직업</p><p className="text-lg font-medium text-gray-900">{customer.job || '-'}</p></div>
+              <div className="md:col-span-2"><p className="text-sm text-gray-500">주소</p><p className="text-lg font-medium text-gray-900">{customer.address || '-'}</p></div>
+              <div className="md:col-span-2"><p className="text-sm text-gray-500">특이사항</p><div className="mt-1 p-4 bg-gray-50 rounded-lg text-gray-900 whitespace-pre-wrap">{customer.notes || '-'}</div></div>
             </div>
-            <div><p className="text-sm text-gray-500">직업</p><p className="text-lg font-medium text-gray-900">{customer.job || '-'}</p></div>
-            <div className="md:col-span-2"><p className="text-sm text-gray-500">주소</p><p className="text-lg font-medium text-gray-900">{customer.address || '-'}</p></div>
-            <div className="md:col-span-2"><p className="text-sm text-gray-500">특이사항</p><div className="mt-1 p-4 bg-gray-50 rounded-lg text-gray-900 whitespace-pre-wrap">{customer.notes || '-'}</div></div>
-          </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
