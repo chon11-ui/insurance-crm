@@ -6,7 +6,15 @@ let adminInitError = ''
 if (!getApps().length) {
   try {
     if (process.env.FIREBASE_PROJECT_ID) {
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY || ''
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY || ''
+      // Remove leading/trailing quotes if they exist (common Netlify .env import issue)
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1)
+      }
+      if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+        privateKey = privateKey.slice(1, -1)
+      }
+      
       initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
