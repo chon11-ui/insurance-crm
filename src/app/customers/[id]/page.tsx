@@ -1,137 +1,102 @@
-import { getCustomer, deleteCustomer } from '@/app/actions/customer'
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, User, Phone, MapPin, Trash2, Calendar, FileText, Gift, Users } from 'lucide-react'
-import { format } from 'date-fns'
-import { FamilyForm } from '@/components/FamilyForm'
-import { ContractForm } from '@/components/ContractForm'
-import { TouchHistoryForm } from '@/components/TouchHistoryForm'
+'use client'
 
-export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const customer = await getCustomer(id)
-  if (!customer) notFound()
+import { useEffect, useState, use } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { auth, db } from '@/lib/firebase'
+import { doc, getDoc, deleteDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import ContractForm from '@/components/ContractForm'
+import FamilyForm from '@/components/FamilyForm'
+import TouchHistoryForm from '@/components/TouchHistoryForm'
+
+export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter()
+  const { id } = use(params)
+  const [customer, setCustomer] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      try {
+        const docRef = doc(db, 'customers', id)
+        const docSnap = await getDoc(docRef)
+        
+        if (docSnap.exists() && docSnap.data().plannerId === user.uid) {
+          setCustomer({ id: docSnap.id, ...docSnap.data() })
+        } else {
+          setError('고객 정보를 찾을 수 없거나 권한이 없습니다.')
+        }
+      } catch (err: any) {
+        console.error(err)
+        setError('데이터를 불러오는데 실패했습니다.')
+      } finally {
+        setLoading(false)
+      }
+    })
+    return () => unsubscribe()
+  }, [id, router])
 
   const handleDelete = async () => {
-    'use server'
-    await deleteCustomer(id)
-    redirect('/')
+    if (!confirm('정말 이 고객을 삭제하시겠습니까? (관련된 모든 데이터가 삭제됩니다)')) return
+    
+    try {
+      await deleteDoc(doc(db, 'customers', id))
+      router.push('/')
+    } catch (err) {
+      console.error(err)
+      alert('삭제 실패')
+    }
   }
 
+  if (loading) return <div className="p-8 text-center">로딩중...</div>
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>
+  if (!customer) return null
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-20">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-              <ArrowLeft className="w-6 h-6 text-gray-700" />
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <User className="w-6 h-6 text-blue-600" />
-              고객 상세 정보
-            </h1>
-          </div>
-          <form action={handleDelete}>
-            <button type="submit" className="text-red-500 hover:text-red-700 flex items-center gap-1 font-medium bg-red-50 px-3 py-1.5 rounded-lg transition-colors">
-              <Trash2 className="w-4 h-4" /> 고객 삭제
+    <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            목록으로 돌아가기
+          </Link>
+          <div className="flex gap-2">
+            <button onClick={handleDelete} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md">
+              <Trash2 className="w-4 h-4" />
+              고객 삭제
             </button>
-          </form>
-        </header>
-
-        {/* 기본 정보 */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-4 mb-4 pb-4 border-b">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center text-blue-600">
-              <User className="w-8 h-8" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">{customer.name}</h2>
-              <p className="text-sm text-gray-500">등록일: {format(customer.createdAt, 'yyyy-MM-dd')}</p>
-            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
-            <p className="flex items-center gap-2"><Phone className="w-5 h-5 text-gray-400" /> {customer.phone}</p>
-            <p className="flex items-center gap-2"><MapPin className="w-5 h-5 text-gray-400" /> {customer.address || '주소 미입력'}</p>
-          </div>
-        </section>
+        </div>
 
-        {/* 가족 정보 */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-bold flex items-center gap-2 mb-4 border-b pb-2">
-            <Users className="w-5 h-5 text-blue-500" />
-            가족 정보 ({customer.familyMembers.length}/4)
-          </h3>
-          {customer.familyMembers.length > 0 ? (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {customer.familyMembers.map((f: any) => (
-                <li key={f.id} className="bg-gray-50 p-3 rounded-lg border flex flex-col">
-                  <span className="font-medium text-gray-900">{f.name} <span className="text-sm text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full ml-1">{f.relation}</span></span>
-                  {f.phone && <span className="text-sm text-gray-600 mt-1">📞 {f.phone}</span>}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 text-sm">등록된 가족이 없습니다.</p>
-          )}
-          {customer.familyMembers.length < 4 && <FamilyForm customerId={customer.id} />}
-        </section>
-
-        {/* 보유 계약 */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-bold flex items-center gap-2 mb-4 border-b pb-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            보유 계약
-          </h3>
-          <div className="space-y-3">
-            {customer.contracts.map((c: any) => (
-              <div key={c.id} className="bg-gray-50 p-4 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-gray-900">{c.company}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === '유지' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {c.status}
-                    </span>
-                  </div>
-                  <p className="text-gray-700">{c.productName}</p>
-                </div>
-                <div className="text-right text-sm text-gray-600">
-                  <p>월 <strong className="text-gray-900">{c.premium.toLocaleString()}</strong>원</p>
-                  {c.contractDate && <p>가입일: {format(c.contractDate, 'yyyy-MM-dd')}</p>}
-                </div>
-              </div>
-            ))}
-            {customer.contracts.length === 0 && <p className="text-gray-500 text-sm">등록된 계약이 없습니다.</p>}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">고객 상세 정보</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div><p className="text-sm text-gray-500">이름</p><p className="text-lg font-medium text-gray-900">{customer.name}</p></div>
+            <div><p className="text-sm text-gray-500">연락처</p><p className="text-lg font-medium text-gray-900">{customer.phone}</p></div>
+            <div><p className="text-sm text-gray-500">생년월일</p><p className="text-lg font-medium text-gray-900">{customer.birthDate || '-'}</p></div>
+            <div><p className="text-sm text-gray-500">직업</p><p className="text-lg font-medium text-gray-900">{customer.job || '-'}</p></div>
+            <div className="md:col-span-2"><p className="text-sm text-gray-500">주소</p><p className="text-lg font-medium text-gray-900">{customer.address || '-'}</p></div>
+            <div className="md:col-span-2"><p className="text-sm text-gray-500">특이사항</p><div className="mt-1 p-4 bg-gray-50 rounded-lg text-gray-900 whitespace-pre-wrap">{customer.notes || '-'}</div></div>
           </div>
-          <ContractForm customerId={customer.id} />
-        </section>
+        </div>
 
-        {/* 터치 이력 */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-bold flex items-center gap-2 mb-4 border-b pb-2">
-            <Gift className="w-5 h-5 text-green-500" />
-            터치 / 활동 이력
-          </h3>
-          <div className="space-y-4 mb-4 max-h-80 overflow-y-auto pr-2">
-            {customer.touchHistories.map((t: any) => (
-              <div key={t.id} className="flex gap-4 items-start relative pl-4 border-l-2 border-gray-200">
-                <div className="absolute w-3 h-3 bg-gray-300 rounded-full -left-[7px] top-1.5 border-2 border-white"></div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {format(t.date, 'yyyy-MM-dd')}
-                    </span>
-                    <span className="text-sm font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded">{t.type}</span>
-                  </div>
-                  {t.description && <p className="mt-1 text-gray-700">{t.description}</p>}
-                </div>
-              </div>
-            ))}
-            {customer.touchHistories.length === 0 && <p className="text-gray-500 text-sm pl-4 border-l-2 border-gray-200">터치 이력이 없습니다.</p>}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <ContractForm customerId={id} />
+            <TouchHistoryForm customerId={id} />
           </div>
-          <TouchHistoryForm customerId={customer.id} />
-        </section>
+          <div className="lg:col-span-1">
+            <FamilyForm customerId={id} />
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
