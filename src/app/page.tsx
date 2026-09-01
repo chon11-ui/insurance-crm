@@ -8,7 +8,7 @@ import ExportCSV from '@/components/ExportCSV'
 import { auth, db } from '@/lib/firebase'
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import LogoutButton from '@/components/LogoutButton'
+
 
 export default function Home() {
   const [customers, setCustomers] = useState<any[]>([])
