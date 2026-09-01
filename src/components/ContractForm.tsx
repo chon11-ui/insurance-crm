@@ -15,6 +15,7 @@ export function ContractForm({ customerId }: { customerId: string }) {
       productName: formData.get('productName'),
       premium: formData.get('premium'),
       status: formData.get('status'),
+      contractNumber: formData.get('contractNumber'),
       contractDate: formData.get('contractDate')
     }
 
@@ -29,9 +30,10 @@ export function ContractForm({ customerId }: { customerId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-2">
+    <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 md:grid-cols-6 gap-2">
       <input name="company" required placeholder="보험사명" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500" />
       <input name="productName" required placeholder="상품명" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500 md:col-span-2" />
+      <input name="contractNumber" placeholder="계약번호 (선택)" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500" />
       <input name="premium" type="number" required placeholder="월 보험료(원)" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500" />
       <select name="status" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500 bg-white">
         <option value="유지">유지</option>
@@ -39,7 +41,7 @@ export function ContractForm({ customerId }: { customerId: string }) {
         <option value="해지">해지</option>
         <option value="만기">만기</option>
       </select>
-      <input name="contractDate" type="date" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500" />
+      <input name="contractDate" type="date" className="px-3 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500 md:col-span-2" />
       <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 md:col-span-4">
         계약 추가
       </button>

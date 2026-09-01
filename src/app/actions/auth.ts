@@ -1,27 +1,27 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { getAuth } from 'firebase-admin/auth'
 
-// 기본 비밀번호: 1234 (환경변수 APP_PASSWORD 로 변경 가능)
-const APP_PASSWORD = process.env.APP_PASSWORD || '1234'
-
-export async function verifyPassword(password: string) {
-  if (password === APP_PASSWORD) {
-    const cookieStore = await cookies()
-    cookieStore.set('crm_auth', 'true', { 
+export async function createSession(idToken: string) {
+  try {
+    const expiresIn = 60 * 60 * 24 * 5 * 1000 // 5 days
+    const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn })
+    
+    ;(await cookies()).set('__session', sessionCookie, { 
+      maxAge: expiresIn, 
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 30, // 30일 유지
       path: '/'
     })
-    return true
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Session creation failed', error)
+    return { success: false, error: 'Unauthorized' }
   }
-  return false
 }
 
-export async function logout() {
-  const cookieStore = await cookies()
-  cookieStore.delete('crm_auth')
-  redirect('/login')
+export async function removeSession() {
+  ;(await cookies()).delete('__session')
 }

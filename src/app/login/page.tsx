@@ -1,58 +1,77 @@
 'use client'
 
 import { useState } from 'react'
-import { verifyPassword } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
-import { Lock } from 'lucide-react'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
+import { createSession } from '@/app/actions/auth'
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setError('')
     
-    const success = await verifyPassword(password)
-    if (success) {
-      router.push('/')
-      router.refresh()
-    } else {
-      setError('비밀번호가 일치하지 않습니다.')
+    try {
+      // 1. Sign in with Firebase Client Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const idToken = await userCredential.user.getIdToken()
+      
+      // 2. Send ID token to Server Action to create a session cookie
+      const res = await createSession(idToken)
+      if (res.success) {
+        router.push('/')
+      } else {
+        setError('로그인 세션 생성 실패')
+      }
+    } catch (err: any) {
+      console.error(err)
+      setError('이메일이나 비밀번호가 일치하지 않습니다.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 w-full max-w-sm">
-        <div className="flex flex-col items-center mb-6">
-          <div className="bg-blue-100 p-3 rounded-full mb-3 text-blue-600">
-            <Lock className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">CRM 로그인</h1>
-          <p className="text-gray-500 text-sm mt-1">접근을 위해 비밀번호를 입력해주세요.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-6">CRM 로그인</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <input
+            <label className="block text-sm font-medium text-gray-700">이메일</label>
+            <input 
+              type="email"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">비밀번호</label>
+            <input 
               type="password"
-              placeholder="비밀번호"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              autoFocus
+              onChange={e => setPassword(e.target.value)}
+              required
             />
           </div>
           
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           
-          <button
-            type="submit"
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            접속하기
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
       </div>

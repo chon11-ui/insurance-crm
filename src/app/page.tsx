@@ -1,6 +1,7 @@
 import { getCustomers } from './actions/customer'
 import Link from 'next/link'
-import { Users, Search, PlusCircle, User } from 'lucide-react'
+import { Users, Search, PlusCircle, User, LogOut } from 'lucide-react'
+import ExportCSV from '@/components/ExportCSV'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,16 +26,8 @@ export default async function Home({
             <p className="text-gray-500 mt-1">총 {customers.length}명의 고객이 등록되어 있습니다.</p>
           </div>
           
-          <div className="flex gap-2">
-            <form action={async () => {
-              'use server'
-              const { logout } = await import('./actions/auth')
-              await logout()
-            }}>
-              <button className="flex items-center justify-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
-                로그아웃
-              </button>
-            </form>
+          <div className="flex flex-wrap gap-2">
+            <ExportCSV customers={customers} />
             <Link 
               href="/customers/new" 
               className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -42,6 +35,16 @@ export default async function Home({
               <PlusCircle className="w-5 h-5" />
               신규 등록
             </Link>
+            <form action={async () => {
+              'use server'
+              const { removeSession } = await import('./actions/auth')
+              await removeSession()
+            }}>
+              <button className="flex items-center justify-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                <LogOut className="w-4 h-4" />
+                로그아웃
+              </button>
+            </form>
           </div>
         </header>
 
@@ -60,7 +63,7 @@ export default async function Home({
         </section>
 
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customers.map(customer => (
+          {customers.map((customer: any) => (
             <Link key={customer.id} href={`/customers/${customer.id}`} className="block group">
               <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 group-hover:shadow-md transition-shadow group-hover:border-blue-300">
                 <div className="flex items-center gap-3 mb-3">

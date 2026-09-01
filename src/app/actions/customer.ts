@@ -2,10 +2,30 @@
 
 import { db } from '@/lib/firebase-admin'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { getAuth } from 'firebase-admin/auth'
+
+// Helper to get current planner ID from session cookie
+async function getPlannerId() {
+  const sessionCookie = (await cookies()).get('__session')?.value
+  if (!sessionCookie) throw new Error('Unauthorized')
+  
+  try {
+    const decodedClaims = await getAuth().verifySessionCookie(sessionCookie, true)
+    return decodedClaims.uid
+  } catch (error) {
+    throw new Error('Unauthorized')
+  }
+}
 
 export async function getCustomers(query: string = '') {
   try {
-    const snapshot = await db.collection('customers').orderBy('createdAt', 'desc').get()
+    const plannerId = await getPlannerId()
+    const snapshot = await db.collection('customers')
+      .where('plannerId', '==', plannerId)
+      .orderBy('createdAt', 'desc')
+      .get()
+      
     const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any))
     
     if (query) {
@@ -20,10 +40,16 @@ export async function getCustomers(query: string = '') {
 
 export async function getCustomer(id: string) {
   try {
+    const plannerId = await getPlannerId()
     const doc = await db.collection('customers').doc(id).get()
+    
     if (!doc.exists) return null
+    
+    const customerData = doc.data() as any
+    // Security check: ensure this customer belongs to the logged-in planner
+    if (customerData.plannerId !== plannerId) return null
 
-    const customer = { id: doc.id, ...doc.data() } as any
+    const customer = { id: doc.id, ...customerData }
 
     const [famSnap, conSnap, touchSnap] = await Promise.all([
       db.collection('customers').doc(id).collection('familyMembers').get(),
@@ -48,10 +74,12 @@ export async function getCustomer(id: string) {
 }
 
 export async function createCustomer(data: any) {
+  const plannerId = await getPlannerId()
   const ref = await db.collection('customers').add({
     name: data.name,
     phone: data.phone,
     address: data.address,
+    plannerId: plannerId,
     createdAt: new Date(),
   })
   revalidatePath('/')
@@ -59,38 +87,56 @@ export async function createCustomer(data: any) {
 }
 
 export async function deleteCustomer(id: string) {
-  await db.collection('customers').doc(id).delete()
-  revalidatePath('/')
+  const plannerId = await getPlannerId()
+  const doc = await db.collection('customers').doc(id).get()
+  
+  if (doc.exists && doc.data()?.plannerId === plannerId) {
+    await db.collection('customers').doc(id).delete()
+    revalidatePath('/')
+  }
 }
 
 export async function addTouchHistory(customerId: string, data: { type: string, description: string, date: Date }) {
-  await db.collection('customers').doc(customerId).collection('touchHistories').add({
-    type: data.type,
-    description: data.description,
-    date: data.date,
-    createdAt: new Date()
-  })
-  revalidatePath(`/customers/${customerId}`)
+  const plannerId = await getPlannerId()
+  const doc = await db.collection('customers').doc(customerId).get()
+  if (doc.exists && doc.data()?.plannerId === plannerId) {
+    await db.collection('customers').doc(customerId).collection('touchHistories').add({
+      type: data.type,
+      description: data.description,
+      date: data.date,
+      createdAt: new Date()
+    })
+    revalidatePath(`/customers/${customerId}`)
+  }
 }
 
 export async function addContract(customerId: string, data: any) {
-  await db.collection('customers').doc(customerId).collection('contracts').add({
-    company: data.company,
-    productName: data.productName,
-    premium: parseInt(data.premium) || 0,
-    status: data.status,
-    contractDate: data.contractDate ? new Date(data.contractDate) : null,
-    createdAt: new Date()
-  })
-  revalidatePath(`/customers/${customerId}`)
+  const plannerId = await getPlannerId()
+  const doc = await db.collection('customers').doc(customerId).get()
+  if (doc.exists && doc.data()?.plannerId === plannerId) {
+    await db.collection('customers').doc(customerId).collection('contracts').add({
+      company: data.company,
+      productName: data.productName,
+      premium: parseInt(data.premium) || 0,
+      status: data.status,
+      contractNumber: data.contractNumber || '',
+      contractDate: data.contractDate ? new Date(data.contractDate) : null,
+      createdAt: new Date()
+    })
+    revalidatePath(`/customers/${customerId}`)
+  }
 }
 
 export async function addFamilyMember(customerId: string, data: any) {
-  await db.collection('customers').doc(customerId).collection('familyMembers').add({
-    name: data.name,
-    relation: data.relation,
-    phone: data.phone,
-    createdAt: new Date()
-  })
-  revalidatePath(`/customers/${customerId}`)
+  const plannerId = await getPlannerId()
+  const doc = await db.collection('customers').doc(customerId).get()
+  if (doc.exists && doc.data()?.plannerId === plannerId) {
+    await db.collection('customers').doc(customerId).collection('familyMembers').add({
+      name: data.name,
+      relation: data.relation,
+      phone: data.phone,
+      createdAt: new Date()
+    })
+    revalidatePath(`/customers/${customerId}`)
+  }
 }
