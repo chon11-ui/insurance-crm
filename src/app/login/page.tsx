@@ -53,7 +53,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err)
-      setError('구글 로그인에 실패했습니다.')
+      setError('구글에러: ' + (err.message || String(err)))
     } finally {
       setLoading(false)
     }
