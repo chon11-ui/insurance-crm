@@ -5,13 +5,17 @@ import { useRouter } from 'next/navigation'
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 
-
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const setClientCookie = (uid: string) => {
+    // Set a client cookie that lasts 5 days
+    document.cookie = `__session=${uid}; path=/; max-age=${60 * 60 * 24 * 5}; samesite=strict`
+  }
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,17 +24,11 @@ export default function LoginPage() {
     
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const idToken = await userCredential.user.getIdToken()
-      
-      const response = await fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken }) }); const res = await response.json(); if (!response.ok) throw new Error(res.error)
-      if (res.success) {
-        router.push('/')
-      } else {
-        setError('서버 에러: ' + (res.error || '알 수 없음'))
-      }
+      setClientCookie(userCredential.user.uid)
+      router.push('/')
     } catch (err: any) {
       console.error(err)
-      setError('이메일에러: ' + (err.message || String(err)))
+      setError('이메일이나 비밀번호가 일치하지 않습니다.')
     } finally {
       setLoading(false)
     }
@@ -43,17 +41,11 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider()
       const userCredential = await signInWithPopup(auth, provider)
-      const idToken = await userCredential.user.getIdToken()
-      
-      const response = await fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken }) }); const res = await response.json(); if (!response.ok) throw new Error(res.error)
-      if (res.success) {
-        router.push('/')
-      } else {
-        setError('서버 에러: ' + (res.error || '알 수 없음'))
-      }
+      setClientCookie(userCredential.user.uid)
+      router.push('/')
     } catch (err: any) {
       console.error(err)
-      setError('구글에러: ' + (err.message || String(err)))
+      setError('구글 로그인 취소 또는 에러')
     } finally {
       setLoading(false)
     }
