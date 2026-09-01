@@ -30,7 +30,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err)
-      setError('이메일이나 비밀번호가 일치하지 않습니다.')
+      setError('이메일에러: ' + (err.message || String(err)))
     } finally {
       setLoading(false)
     }
