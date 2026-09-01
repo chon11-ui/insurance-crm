@@ -19,7 +19,7 @@ export async function createSession(idToken: string) {
     return { success: true }
   } catch (error) {
     console.error('Session creation failed', error)
-    return { success: false, error: 'Unauthorized' }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
