@@ -17,6 +17,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const [customer, setCustomer] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showRRN, setShowRRN] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -80,7 +81,22 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div><p className="text-sm text-gray-500">이름</p><p className="text-lg font-medium text-gray-900">{customer.name}</p></div>
             <div><p className="text-sm text-gray-500">연락처</p><p className="text-lg font-medium text-gray-900">{customer.phone}</p></div>
-            <div><p className="text-sm text-gray-500">주민등록번호</p><p className="text-lg font-medium text-gray-900">{customer.birthDate || '-'}-{customer.residentNumBack ? '*******' : '-'}</p></div>
+            <div>
+              <p className="text-sm text-gray-500">주민등록번호</p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-medium text-gray-900">
+                  {customer.birthDate || '-'}-{customer.residentNumBack ? (showRRN ? customer.residentNumBack : '*******') : '-'}
+                </p>
+                {customer.residentNumBack && (
+                  <button 
+                    onClick={() => setShowRRN(!showRRN)}
+                    className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
+                  >
+                    {showRRN ? '숨기기' : '보기'}
+                  </button>
+                )}
+              </div>
+            </div>
             <div><p className="text-sm text-gray-500">직업</p><p className="text-lg font-medium text-gray-900">{customer.job || '-'}</p></div>
             <div className="md:col-span-2"><p className="text-sm text-gray-500">주소</p><p className="text-lg font-medium text-gray-900">{customer.address || '-'}</p></div>
             <div className="md:col-span-2"><p className="text-sm text-gray-500">특이사항</p><div className="mt-1 p-4 bg-gray-50 rounded-lg text-gray-900 whitespace-pre-wrap">{customer.notes || '-'}</div></div>
