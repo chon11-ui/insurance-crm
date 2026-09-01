@@ -28,10 +28,10 @@ export default function Home() {
         const q = query(
           collection(db, 'customers'),
           where('plannerId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          
         )
         const snapshot = await getDocs(q)
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); //(doc => ({ id: doc.id, ...doc.data() }))
         setCustomers(data)
       } catch (err: any) {
         console.error('Fetch error:', err)
