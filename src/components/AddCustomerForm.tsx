@@ -12,6 +12,7 @@ export default function AddCustomerForm() {
     name: '',
     phone: '',
     birthDate: '',
+    residentNumBack: '',
     address: '',
     job: '',
     notes: ''
@@ -77,15 +78,29 @@ export default function AddCustomerForm() {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">생년월일</label>
-          <input
-            type="date"
-            name="birthDate"
-            value={formData.birthDate}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          />
+                <div>
+          <label className="block text-sm font-medium text-gray-700">주민등록번호</label>
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              type="text"
+              name="birthDate"
+              maxLength={6}
+              placeholder="생년월일 6자리"
+              value={formData.birthDate}
+              onChange={handleChange}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+            />
+            <span className="text-gray-500">-</span>
+            <input
+              type="password"
+              name="residentNumBack"
+              maxLength={7}
+              placeholder="뒷자리 7자리"
+              value={formData.residentNumBack}
+              onChange={handleChange}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+            />
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">직업</label>

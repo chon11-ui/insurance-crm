@@ -80,7 +80,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div><p className="text-sm text-gray-500">이름</p><p className="text-lg font-medium text-gray-900">{customer.name}</p></div>
             <div><p className="text-sm text-gray-500">연락처</p><p className="text-lg font-medium text-gray-900">{customer.phone}</p></div>
-            <div><p className="text-sm text-gray-500">생년월일</p><p className="text-lg font-medium text-gray-900">{customer.birthDate || '-'}</p></div>
+            <div><p className="text-sm text-gray-500">주민등록번호</p><p className="text-lg font-medium text-gray-900">{customer.birthDate || '-'}-{customer.residentNumBack ? '*******' : '-'}</p></div>
             <div><p className="text-sm text-gray-500">직업</p><p className="text-lg font-medium text-gray-900">{customer.job || '-'}</p></div>
             <div className="md:col-span-2"><p className="text-sm text-gray-500">주소</p><p className="text-lg font-medium text-gray-900">{customer.address || '-'}</p></div>
             <div className="md:col-span-2"><p className="text-sm text-gray-500">특이사항</p><div className="mt-1 p-4 bg-gray-50 rounded-lg text-gray-900 whitespace-pre-wrap">{customer.notes || '-'}</div></div>
