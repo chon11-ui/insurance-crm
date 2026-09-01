@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { getAuth } from 'firebase-admin/auth'
+import '@/lib/firebase-admin'
 
 export async function createSession(idToken: string) {
   try {
