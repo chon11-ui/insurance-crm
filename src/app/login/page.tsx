@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { createSession } from '@/app/actions/auth'
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -22,7 +22,7 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const idToken = await userCredential.user.getIdToken()
       
-      const res = await createSession(idToken)
+      const response = await fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken }) }); const res = await response.json(); if (!response.ok) throw new Error(res.error)
       if (res.success) {
         router.push('/')
       } else {
@@ -45,7 +45,7 @@ export default function LoginPage() {
       const userCredential = await signInWithPopup(auth, provider)
       const idToken = await userCredential.user.getIdToken()
       
-      const res = await createSession(idToken)
+      const response = await fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken }) }); const res = await response.json(); if (!response.ok) throw new Error(res.error)
       if (res.success) {
         router.push('/')
       } else {
