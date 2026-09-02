@@ -59,7 +59,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   
   const handleEditClick = () => {
-    setEditForm({ status: '가망고객', ...customer })
+    setEditForm({ ...customer, status: Array.isArray(customer.status) ? customer.status : (customer.status ? [customer.status] : ['가망고객']) })
     setIsEditing(true)
   }
 
@@ -77,6 +77,18 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       console.error(err)
       alert('수정 실패')
     }
+  }
+
+  
+  const handleStatusChange = (statusStr: string) => {
+    setEditForm((prev: any) => {
+      const current = prev.status || [];
+      if (current.includes(statusStr)) {
+        return { ...prev, status: current.filter((s: string) => s !== statusStr) };
+      } else {
+        return { ...prev, status: [...current, statusStr] };
+      }
+    });
   }
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -126,11 +138,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex justify-between items-center mb-6 border-b pb-4">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               고객 상세 정보
-              {!isEditing && (
-                <span className={`px-3 py-1 text-sm font-bold rounded-full border ${getBadgeColor(customer.status || '가망고객')}`}>
-                  {customer.status || '가망고객'}
-                </span>
-              )}
+              {!isEditing && (() => {
+                const statuses = Array.isArray(customer.status) 
+                  ? customer.status 
+                  : (customer.status ? [customer.status] : ['가망고객']);
+                return statuses.map((s: string) => (
+                  <span key={s} className={`ml-2 px-3 py-1 text-sm font-bold rounded-full border ${getBadgeColor(s)}`}>
+                    {s}
+                  </span>
+                ));
+              })()}
             </h1>
           </div>
           {isEditing ? (
@@ -147,13 +164,20 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">진행 상태</label>
-                  <select name="status" value={editForm.status || '가망고객'} onChange={handleEditChange as any} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    <option value="가망고객">가망고객</option>
-                    <option value="보장분석">보장분석</option>
-                    <option value="계약체결">계약체결</option>
-                    <option value="유지관리">유지관리</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">진행 상태 (다중 선택 가능)</label>
+                  <div className="flex flex-wrap gap-3">
+                    {['가망고객', '보장분석', '계약체결', '유지관리'].map(s => (
+                      <label key={s} className="inline-flex items-center gap-1 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={(editForm.status || []).includes(s)}
+                          onChange={() => handleStatusChange(s)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{s}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div><label className="block text-sm font-medium text-gray-700">직업</label><input type="text" name="job" value={editForm.job} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
                 <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700">주소</label><input type="text" name="address" value={editForm.address} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>

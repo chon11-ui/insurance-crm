@@ -16,7 +16,7 @@ export default function AddCustomerForm() {
     address: '',
     job: '',
     notes: '',
-    status: '가망고객'
+    status: ['가망고객']
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +44,18 @@ export default function AddCustomerForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  
+  const handleStatusChange = (statusStr: string) => {
+    setFormData(prev => {
+      const current = prev.status || [];
+      if (current.includes(statusStr)) {
+        return { ...prev, status: current.filter((s: string) => s !== statusStr) };
+      } else {
+        return { ...prev, status: [...current, statusStr] };
+      }
+    });
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -105,18 +117,20 @@ export default function AddCustomerForm() {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">진행 상태</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange as any}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          >
-            <option value="가망고객">가망고객</option>
-            <option value="보장분석">보장분석</option>
-            <option value="계약체결">계약체결</option>
-            <option value="유지관리">유지관리</option>
-          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-2">진행 상태 (다중 선택 가능)</label>
+          <div className="flex flex-wrap gap-2">
+            {['가망고객', '보장분석', '계약체결', '유지관리'].map(s => (
+              <label key={s} className="inline-flex items-center gap-1 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={(formData.status || []).includes(s)}
+                  onChange={() => handleStatusChange(s)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">{s}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div>
