@@ -12,6 +12,17 @@ import FamilyForm from '@/components/FamilyForm'
 import TouchHistoryForm from '@/components/TouchHistoryForm'
 
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+
+  const getBadgeColor = (status: string) => {
+    switch (status) {
+      case '보장분석': return 'bg-red-100 text-red-700 border-red-200'
+      case '계약체결': return 'bg-blue-100 text-blue-700 border-blue-200'
+      case '유지관리': return 'bg-green-100 text-green-700 border-green-200'
+      case '가망고객':
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
   const router = useRouter()
   const { id } = use(params)
   const [customer, setCustomer] = useState<any>(null)
@@ -48,7 +59,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   
   const handleEditClick = () => {
-    setEditForm({ ...customer })
+    setEditForm({ status: '가망고객', ...customer })
     setIsEditing(true)
   }
 
@@ -112,7 +123,16 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">고객 상세 정보</h1>
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              고객 상세 정보
+              {customer.status && !isEditing && (
+                <span className={`px-3 py-1 text-sm font-bold rounded-full border ${getBadgeColor(customer.status)}`}>
+                  {customer.status}
+                </span>
+              )}
+            </h1>
+          </div>
           {isEditing ? (
             <form onSubmit={handleUpdate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,6 +145,15 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     <span>-</span>
                     <input type="text" name="residentNumBack" maxLength={7} value={editForm.residentNumBack} onChange={handleEditChange} className="block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">진행 상태</label>
+                  <select name="status" value={editForm.status || '가망고객'} onChange={handleEditChange as any} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="가망고객">가망고객</option>
+                    <option value="보장분석">보장분석</option>
+                    <option value="계약체결">계약체결</option>
+                    <option value="유지관리">유지관리</option>
+                  </select>
                 </div>
                 <div><label className="block text-sm font-medium text-gray-700">직업</label><input type="text" name="job" value={editForm.job} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>
                 <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700">주소</label><input type="text" name="address" value={editForm.address} onChange={handleEditChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" /></div>

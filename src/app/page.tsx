@@ -11,6 +11,17 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 
 
 export default function Home() {
+
+  const getBadgeColor = (status: string) => {
+    switch (status) {
+      case '보장분석': return 'bg-red-100 text-red-700 border-red-200'
+      case '계약체결': return 'bg-blue-100 text-blue-700 border-blue-200'
+      case '유지관리': return 'bg-green-100 text-green-700 border-green-200'
+      case '가망고객':
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
   const [customers, setCustomers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -113,6 +124,11 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{customer.name}</h3>
+                      {customer.status && (
+                        <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full border ${getBadgeColor(customer.status)}`}>
+                          {customer.status}
+                        </span>
+                      )}
                   </div>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
