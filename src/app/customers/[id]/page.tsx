@@ -126,9 +126,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex justify-between items-center mb-6 border-b pb-4">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               고객 상세 정보
-              {customer.status && !isEditing && (
-                <span className={`px-3 py-1 text-sm font-bold rounded-full border ${getBadgeColor(customer.status)}`}>
-                  {customer.status}
+              {!isEditing && (
+                <span className={`px-3 py-1 text-sm font-bold rounded-full border ${getBadgeColor(customer.status || '가망고객')}`}>
+                  {customer.status || '가망고객'}
                 </span>
               )}
             </h1>

@@ -123,12 +123,14 @@ export default function Home() {
                     <User className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{customer.name}</h3>
-                      {customer.status && (
-                        <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full border ${getBadgeColor(customer.status)}`}>
-                          {customer.status}
+                    <div className="flex items-center">
+                      <h3 className="text-lg font-bold text-gray-900">{customer.name}</h3>
+                      {true && (
+                        <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full border ${getBadgeColor(customer.status || '가망고객')}`}>
+                          {customer.status || '가망고객'}
                         </span>
                       )}
+                    </div>
                   </div>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
