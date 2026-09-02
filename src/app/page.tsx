@@ -57,7 +57,7 @@ export default function Home() {
       <div className="p-8 text-red-600 max-w-4xl mx-auto mt-20 bg-white rounded shadow text-center">
         <h1 className="text-2xl font-bold mb-4">데이터베이스 에러</h1>
         <p>{error}</p>
-        <button onClick={() => signOut(auth)} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">다시 로그인</button>
+        <button onClick={() => signOut(auth).then(() => { document.cookie = '__session=; path=/; max-age=0;'; window.location.href = '/login'; })} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">다시 로그인</button>
       </div>
     )
   }
@@ -83,7 +83,7 @@ export default function Home() {
               <PlusCircle className="w-5 h-5" />
               신규 등록
             </Link>
-            <button onClick={() => signOut(auth).then(() => router.push('/login'))} className="flex items-center justify-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+            <button onClick={() => signOut(auth).then(() => { document.cookie = '__session=; path=/; max-age=0;'; window.location.href = '/login'; })} className="flex items-center justify-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
               <LogOut className="w-4 h-4" />
               로그아웃
             </button>
