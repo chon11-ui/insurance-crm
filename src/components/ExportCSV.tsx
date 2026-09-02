@@ -11,6 +11,7 @@ const ALL_FIELDS = [
   { id: 'job', label: '직업', checked: true },
   { id: 'address', label: '주소', checked: true },
   { id: 'notes', label: '특이사항', checked: true },
+  { id: 'status', label: '상태', checked: true },
   { id: 'createdAt', label: '등록일', checked: true }
 ]
 
@@ -47,6 +48,9 @@ export default function ExportCSV({ customers }: { customers: any[] }) {
         }
         
         // Escape quotes and wrap in quotes to handle commas/newlines
+        if (f.id === 'status' && Array.isArray(val)) {
+          val = val.join(', ')
+        }
         val = String(val).replace(/"/g, '""')
         return `"${val}"`
       }).join(',')
